@@ -1,0 +1,147 @@
+# AI Coworker stack — works with Podman Compose (docker-compose 1.29) and Docker Compose
+#
+# One shot (build + start + pull model + UI):
+#   podman compose up -d --build
+# UI: http://localhost:3080  ·  API: http://localhost:8000
+#
+# GPU vLLM profile:
+#   LLM_BASE_URL=http://vllm:8000/v1 LLM_MODEL=Qwen/Qwen2.5-Coder-14B-Instruct \
+#     podman compose --profile vllm up -d --build
+
+version: "3.8"
+
+services:
+  ollama:
+    image: docker.io/ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    environment:
+      # Default Ollama context is often 4096; raise for PDF/chat history
+      OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-16384}
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    # NVIDIA GPU with Podman CDI (uncomment if configured):
+    # devices:
+    #   - nvidia.com/gpu=all
+
+  # One-shot: pulls LLM_MODEL then exits (fast no-op if already present).
+  ollama-pull:
+    image: docker.io/ollama/ollama:latest
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      LLM_MODEL: ${LLM_MODEL:-openbmb/minicpm-v4.6}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        echo "Pulling model: $$LLM_MODEL"
+        ollama pull "$$LLM_MODEL"
+        echo "Model ready: $$LLM_MODEL"
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  vllm:
+    profiles: ["vllm"]
+    image: docker.io/vllm/vllm-openai:latest
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    command:
+      - --model
+      - ${VLLM_MODEL:-Qwen/Qwen2.5-Coder-14B-Instruct}
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.90"
+    # Podman CDI GPU:
+    # devices:
+    #   - nvidia.com/gpu=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_coworker}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: localhost/ai-coworker-api:local
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-not-needed}
+      LLM_MODEL: ${LLM_MODEL:-openbmb/minicpm-v4.6}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.2}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-240}
+      LLM_NUM_CTX: ${LLM_NUM_CTX:-16384}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/ai_coworker}
+      MCP_GITHUB_URL: ${MCP_GITHUB_URL:-}
+      MCP_GITHUB_TOKEN: ${MCP_GITHUB_TOKEN:-}
+      MCP_CI_URL: ${MCP_CI_URL:-}
+      MCP_CI_TOKEN: ${MCP_CI_TOKEN:-}
+      PROMPTS_PERSIST_PATH: ${PROMPTS_PERSIST_PATH:-/data/prompts.json}
+      PROMPTS_ADMIN_TOKEN: ${PROMPTS_ADMIN_TOKEN:-}
+    volumes:
+      - prompt_data:/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 25s
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: localhost/ai-coworker-web:local
+    restart: unless-stopped
+    ports:
+      - "3080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  ollama_data:
+  pg_data:
+  prompt_data:

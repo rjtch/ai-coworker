@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-coworker
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-coworker-config
+  namespace: ai-coworker
+data:
+  LLM_BASE_URL: "http://vllm.ai-coworker.svc.cluster.local:8000/v1"
+  LLM_MODEL: "Qwen/Qwen2.5-Coder-14B-Instruct"
+  LLM_API_KEY: "not-needed"
+  REQUIRE_DEPLOY_APPROVAL: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-coworker-api
+  namespace: ai-coworker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-coworker-api
+  template:
+    metadata:
+      labels:
+        app: ai-coworker-api
+    spec:
+      containers:
+        - name: api
+          image: ai-coworker:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: ai-coworker-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ai-coworker-secrets
+                  key: database-url
+                  optional: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "250m"
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-coworker-api
+  namespace: ai-coworker
+spec:
+  selector:
+    app: ai-coworker-api
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+# Example vLLM Deployment — adjust GPU class / model for your cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: ai-coworker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+    spec:
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - --model
+            - Qwen/Qwen2.5-Coder-14B-Instruct
+            - --max-model-len
+            - "8192"
+          ports:
+            - containerPort: 8000
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm
+  namespace: ai-coworker
+spec:
+  selector:
+    app: vllm
+  ports:
+    - port: 8000
+      targetPort: 8000
