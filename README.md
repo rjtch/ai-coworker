@@ -1,4 +1,4 @@
-# AI Coworker
+# AI Coworker (WIP)
 
 Multi-agent coworker for **chat**, **code**, **review**, and **deploy**.
 
