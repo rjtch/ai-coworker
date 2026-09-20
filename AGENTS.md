@@ -10,7 +10,7 @@ It is **not** a coding agent yet: no filesystem tools, no edit/test loop, no rep
 
 ## Docs vs code
 
-[docs/TECHNICAL.md](docs/TECHNICAL.md) matches the shipped chat-only graph. `README.md` / `docs/SIMPLE.md` may still mention a supervisor and deploy specialists — **ignore that** unless you are implementing it.
+This file is the source of truth for agents. `README.md` may still mention a supervisor and deploy specialists — **ignore that** unless you are implementing it.
 
 Trust:
 

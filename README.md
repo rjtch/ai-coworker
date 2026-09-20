@@ -117,9 +117,7 @@ uv run pytest
 
 | Doc | Audience |
 |-----|----------|
-| **[AGENTS.md](AGENTS.md)** | Cursor and other coding agents (current code, commands, constraints) |
-| **[docs/SIMPLE.md](docs/SIMPLE.md)** | Quick start & operator basics |
-| **[docs/TECHNICAL.md](docs/TECHNICAL.md)** | Architecture of the **running** chat host (API, graph, MCP scaffold, security) |
+| **[AGENTS.md](AGENTS.md)** | Cursor and other coding agents (architecture, commands, constraints) |
 
 ## Layout
 
@@ -129,7 +127,6 @@ src/ai_coworker/
   prompts/    # Markdown + manifest.yaml ← edit prompts here
   api/ mcp/ graph.py …
 frontend/
-docs/
 ```
 
 Prompt conventions: [`src/ai_coworker/prompts/README.md`](src/ai_coworker/prompts/README.md).

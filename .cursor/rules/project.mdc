@@ -5,7 +5,7 @@ alwaysApply: true
 
 # AI Coworker — Cursor agent
 
-Follow [AGENTS.md](../../AGENTS.md) for commands and constraints. Follow [docs/TECHNICAL.md](../../docs/TECHNICAL.md) for architecture.
+Follow [AGENTS.md](../../AGENTS.md) for architecture, commands, and constraints.
 
 ## Non-negotiables
 
