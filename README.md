@@ -71,7 +71,7 @@ Works with Ollama, vLLM, TGI, llama.cpp server, LocalAI, and similar.
 
 - `MCP_GITHUB_*` / `MCP_CI_*` — optional HTTP MCP; chat allowlist is empty today.
 - Empty `DATABASE_URL` → in-memory checkpoints; Compose Postgres for durable threads.
-- `uv run pytest` and `uv run ruff check src tests`. CI is verify-only (no deploy): `.github/workflows/s-sdlc.yml`.
+- `uv run pytest` and `uv run ruff check src tests`. CI is verify-only (no deploy): `.github/workflows/ci.yaml`.
 
 ## Layout
 
@@ -80,7 +80,7 @@ src/ai_coworker/   API, graph, chat node, prompts, MCP scaffold
 frontend/          React chat + prompts panel
 tests/
 compose.yml
-.github/           S-SDLC (lint, test, deps, secrets) — no deploy
+.github/           CI (lint, test, deps, secrets) — no deploy
 ```
 
 License: [MIT](LICENSE). Vulnerability reports: [SECURITY.md](SECURITY.md).

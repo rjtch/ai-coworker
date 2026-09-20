@@ -1,5 +1,5 @@
-# Verify-only S-SDLC. No deploy, publish, or image-push jobs.
-name: S-SDLC
+# Verify-only CI. No deploy, publish, or image-push jobs.
+name: CI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   pull_request:
 
 concurrency:
-  group: s-sdlc-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
