@@ -1,0 +1,20 @@
+---
+description: React chat UI conventions
+globs: frontend/**/*.ts,frontend/**/*.tsx
+alwaysApply: false
+---
+
+# Frontend (`frontend/`)
+
+- Vite + React. API base: `VITE_API_BASE` or `/api`. Prefer WebSocket `ChatSocket` (`/ws/chat`); SSE and POST `/chat` are fallbacks.
+- Types for attachments and stream handlers live in `types.ts` / `api.ts`. Do not call a deploy-approve endpoint — the API does not have one. Leftover `pendingDeploy` / `approveDeploy` is dead; remove or wire only if you add HITL in the graph.
+- Prompts admin token: `X-Prompts-Token` from localStorage (`ai-coworker.prompts-token`).
+- Keep chat, attachments (PDF/PNG/JPEG), and the prompts panel working together. Application state (`threadId`) must stay consistent across those views.
+
+```ts
+// BAD
+await fetch("/api/threads/" + id + "/approve-deploy", { method: "POST" });
+
+// GOOD
+socket.sendChat({ message, thread_id: threadId, attachments });
+```

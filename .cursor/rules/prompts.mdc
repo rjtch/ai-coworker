@@ -1,0 +1,12 @@
+---
+description: Prompt catalog and manifest conventions
+globs: src/ai_coworker/prompts/**
+alwaysApply: false
+---
+
+# Prompts
+
+- IDs are dotted (`chat.system`). Defaults: inline `text` in `manifest.yaml`. Bump `version` when bundled defaults change.
+- Runtime source of truth is the JSON catalog (`PROMPTS_PERSIST_PATH`), seeded from the manifest. Use `PromptStore` / `loader.py` helpers (`get_text`, `render`, `system_message`).
+- Persist via temp file + replace. Keep the store thread-safe.
+- Do not put secrets in prompt text. Variables use `{brace}` `PromptTemplate` placeholders listed in the catalog entry.

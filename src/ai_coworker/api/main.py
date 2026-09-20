@@ -202,8 +202,14 @@ async def websocket_chat(ws: WebSocket) -> None:
                 await _ws_send(ws, {"type": "error", "message": str(exc)})
                 continue
 
-            async def _run_chat() -> None:
-                async for event in _stream_graph_events(thread_id, config, inputs):
+            async def _run_chat(
+                stream_thread_id: str = thread_id,
+                stream_config: dict[str, Any] = config,
+                stream_inputs: dict[str, Any] = inputs,
+            ) -> None:
+                async for event in _stream_graph_events(
+                    stream_thread_id, stream_config, stream_inputs
+                ):
                     await _ws_send(ws, event)
 
             run_task = asyncio.create_task(_run_chat())

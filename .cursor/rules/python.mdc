@@ -1,0 +1,24 @@
+---
+description: Python package conventions for the API and graph
+globs: src/**/*.py,tests/**/*.py
+alwaysApply: false
+---
+
+# Python (`src/ai_coworker`, `tests`)
+
+- Package lives under `src/`. Imports: `from ai_coworker...`. Python 3.12, Ruff line length 100.
+- Settings only through `config.Settings` / env. Do not add cloud LLM providers; `llm.py` stays OpenAI-compatible `base_url`.
+- Graph nodes return **partial** state dicts. `messages` uses `add_messages` — return only new messages.
+- Prompts: `system_message("chat.system")` (or another catalog id). Do not hardcode long system strings in agents.
+- MCP: change allowlists in `mcp/client.py`, then **bind** tools in the node. Loading tools and discarding them (`_ = tools`) is the current bug/scaffold.
+
+```python
+# BAD — invents a specialist that does not exist
+builder.add_node("deploy", deploy_node)
+
+# GOOD — extend the chat loop or add a node that is actually compiled
+builder.add_node("chat", chat_node)
+builder.add_edge(START, "chat")
+```
+
+Keep FastAPI lifespan as the place that opens the checkpointer and compiles the graph.

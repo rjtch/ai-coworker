@@ -3,12 +3,13 @@ name = "ai-coworker"
 version = "0.1.0"
 description = "Multi-agent coworker for chat, code, review, and deploy (LangGraph + MCP)"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "langgraph>=0.4.0",
-    "langgraph-checkpoint-postgres>=2.0.0",
+    "langgraph-checkpoint-postgres>=3.1.1",
     "psycopg[binary]>=3.2.0",
     "langchain>=0.3.0",
     "langchain-openai>=0.3.0",
@@ -19,7 +20,7 @@ dependencies = [
     "httpx>=0.28.0",
     "sse-starlette>=2.2.0",
     "pyyaml>=6.0.0",
-    "pypdf>=5.1.0",
+    "pypdf>=6.16.1",
 ]
 
 [project.optional-dependencies]

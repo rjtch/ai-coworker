@@ -1,0 +1,17 @@
+---
+description: Project source of truth for the Cursor agent
+alwaysApply: true
+---
+
+# AI Coworker — Cursor agent
+
+Follow [AGENTS.md](../../AGENTS.md) for architecture, commands, and constraints.
+
+## Non-negotiables
+
+- Graph is **chat only** (`START → chat → END`). Do not implement against the old supervisor/deploy story unless the task is to add those nodes.
+- Inference: `LLM_BASE_URL` only. No cloud provider SDKs.
+- MCP is configured but **not bound** in `run_chat`. Do not claim GitHub/CI tools work.
+- No secrets in git or logs. Treat attachments as untrusted.
+
+Prefer MCP + a bounded tool loop over new LangGraph specialists. Humans: [README.md](../../README.md).
