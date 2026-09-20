@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useEffectEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   deletePrompt,
   getPromptsAdminToken,
@@ -44,7 +44,7 @@ export default function PromptsPanel({ onBack }: Props) {
     );
   }, [prompts, filter]);
 
-  const load = useEffectEvent(async (preferId?: string | null) => {
+  async function loadCatalog(preferId?: string | null) {
     setLoading(true);
     setError(null);
     try {
@@ -63,10 +63,10 @@ export default function PromptsPanel({ onBack }: Props) {
     } finally {
       setLoading(false);
     }
-  });
+  }
 
   useEffect(() => {
-    void load();
+    void loadCatalog();
   }, []);
 
   function selectPrompt(id: string) {
@@ -150,7 +150,7 @@ export default function PromptsPanel({ onBack }: Props) {
     setError(null);
     try {
       await reloadPrompts();
-      await load(selectedId);
+      await loadCatalog(selectedId);
       setStatus("Catalog reset to defaults");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reload failed");
