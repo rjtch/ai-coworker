@@ -72,6 +72,7 @@ Works with Ollama, vLLM, TGI, llama.cpp server, LocalAI, and similar.
 - `MCP_GITHUB_*` / `MCP_CI_*` — optional HTTP MCP; chat allowlist is empty today.
 - Empty `DATABASE_URL` → in-memory checkpoints; Compose Postgres for durable threads.
 - `uv run pytest` and `uv run ruff check src tests`. CI is verify-only (no deploy): `.github/workflows/ci.yaml`.
+- Dependabot: grouped weekly patch/minor PRs auto-merge after CI. Majors need a human. Enable **Allow auto-merge** on the repo.
 
 ## Layout
 
