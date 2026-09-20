@@ -119,7 +119,7 @@ uv run pytest
 |-----|----------|
 | **[AGENTS.md](AGENTS.md)** | Cursor and other coding agents (current code, commands, constraints) |
 | **[docs/SIMPLE.md](docs/SIMPLE.md)** | Quick start & operator basics |
-| **[docs/TECHNICAL.md](docs/TECHNICAL.md)** | Deep architecture, control flow, security, references |
+| **[docs/TECHNICAL.md](docs/TECHNICAL.md)** | Architecture of the **running** chat host (API, graph, MCP scaffold, security) |
 
 ## Layout
 

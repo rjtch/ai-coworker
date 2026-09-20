@@ -1,0 +1,12 @@
+---
+description: Pytest expectations for this repo
+globs: tests/**/*.py
+alwaysApply: false
+---
+
+# Tests
+
+- `uv run pytest` from repo root (`pythonpath = src`, `asyncio_mode = auto`).
+- Isolate prompt stores with a temp `manifest.yaml` + persist path. Do not write to the package `prompts/` directory.
+- Assert behavior that exists: chat-only MCP allowlist, `build_llm` strips trailing slash and sets `num_ctx`, attachment mime/size/PDF truncation.
+- Do not add tests for supervisor routing or deploy `interrupt()` unless those nodes are implemented.

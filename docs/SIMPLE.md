@@ -1,22 +1,18 @@
 # AI Coworker — Simple Guide
 
-Multi-agent assistant for **chat**, **code**, **review**, and **deploy**.  
+Self-hosted **chat** with a local LLM (Ollama or vLLM). Optional PDF/image attachments and editable prompts.  
 Everything runs on **your** machines/cluster. No cloud AI APIs.
 
-Deep technical docs (architecture, HITL, MCP, security, references): **[TECHNICAL.md](./TECHNICAL.md)**
+Architecture, API, MCP scaffold, security: **[TECHNICAL.md](./TECHNICAL.md)**  
+Coding agents: **[AGENTS.md](../AGENTS.md)**
 
 ---
 
 ## What it does
 
-| Agent | Purpose |
-|-------|---------|
-| **Chat** | Answer questions, plan work |
-| **Code** | Implement changes / suggest diffs |
-| **Review** | Check quality and security (read-only) |
-| **Deploy** | Plan/run deploy — **needs your approval** |
+You send a message (optional PDF / PNG / JPEG). FastAPI runs a one-node LangGraph (`chat`) against your OpenAI-compatible server and streams the reply. Threads can persist in Postgres.
 
-A **supervisor** reads your message and routes it to the right agent.
+MCP GitHub/CI URLs can be set in `.env`, but the chat agent does **not** call those tools yet.
 
 ---
 
@@ -24,13 +20,13 @@ A **supervisor** reads your message and routes it to the right agent.
 
 ```
 You → API (FastAPI)
-        → LangGraph (supervisor + agents)
+        → LangGraph (chat node)
         → Self-hosted LLM (Ollama or vLLM)
-        → Optional MCP tools (GitHub, CI)
+        → Optional MCP config (not bound to the model yet)
 ```
 
-- **LangGraph** = orchestration and memory between steps  
-- **MCP** = tools (repos, CI/CD) — not the LLM  
+- **LangGraph** = orchestration and memory between turns  
+- **MCP** = future tools (repos, CI/CD) — not the LLM  
 - **LLM** = only your local/cluster OpenAI-compatible server  
 
 ---
@@ -108,7 +104,7 @@ curl -s http://localhost:8000/chat \
   -d '{"message":"Explain how deploy works"}'
 ```
 
-Response includes `thread_id`, `intent`, `last_agent`, and `reply`.  
+Response includes `thread_id`, `last_agent`, and `reply`.  
 Send the same `thread_id` again to continue the conversation.
 
 ### Stream (SSE)
@@ -119,15 +115,7 @@ curl -N http://localhost:8000/chat/stream \
   -d '{"message":"Add a health endpoint"}'
 ```
 
-### Approve a deploy
-
-If deploy is waiting for approval (`interrupted: true`):
-
-```bash
-curl -s http://localhost:8000/threads/THREAD_ID/approve-deploy \
-  -H 'content-type: application/json' \
-  -d '{"approved":true}'
-```
+WebSocket `/ws/chat` is what the UI uses (supports cancel).
 
 ---
 
@@ -154,16 +142,7 @@ Any server that speaks **OpenAI `/v1/chat/completions`** works (Ollama, vLLM, TG
 
 ## MCP tools (optional)
 
-Agents get only the tools they need:
-
-| Agent | Allowed MCP |
-|-------|-------------|
-| chat | none |
-| code | github |
-| review | github |
-| deploy | ci + github |
-
-Set `MCP_*` URLs in `.env` when those servers exist in your network.
+Chat currently has **no** MCP allowlist. Env `MCP_GITHUB_URL` / `MCP_CI_URL` is scaffolding for a future tool loop.
 
 ---
 
@@ -171,14 +150,16 @@ Set `MCP_*` URLs in `.env` when those servers exist in your network.
 
 ```
 src/ai_coworker/
-  agents/     supervisor, chat, code, review, deploy
-  api/        HTTP API
-  mcp/        tool allowlists
+  agents/     chat node
+  api/        HTTP + WebSocket
+  mcp/        tool allowlists (unused by chat)
   graph.py    LangGraph workflow
   llm.py      self-hosted client only
-docker-compose.yml
+compose.yml
 deploy/k8s/
-docs/SIMPLE.md   ← this file
+docs/SIMPLE.md    ← this file
+docs/TECHNICAL.md
+AGENTS.md
 ```
 
 ---
@@ -193,15 +174,15 @@ uv run pytest
 
 ## Safety notes
 
-1. Deploy never proceeds without approval when `REQUIRE_DEPLOY_APPROVAL=true`.  
-2. Review agent must not get deploy/CI write tools.  
-3. Keep inference and secrets inside your cluster/VPC.  
+1. Chat HTTP has no auth — do not expose write/shell tools without a runtime gate.  
+2. Keep inference and secrets inside your cluster/VPC.  
+3. Treat uploaded PDFs as untrusted text.
 
 ---
 
 ## Next steps
 
 1. Pull a model and hit `/chat`.  
-2. Add GitHub MCP when you want real PRs.  
+2. Turn on Postgres (`DATABASE_URL`) for durable threads.  
 3. Use vLLM + K8s for production GPU serving.  
-4. Turn on Postgres (`DATABASE_URL`) for durable threads.
+4. Bind MCP tools in a bounded agent loop when you want real repo actions.

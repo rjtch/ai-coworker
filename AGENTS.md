@@ -8,11 +8,11 @@ Self-hosted **chat** over FastAPI + LangGraph + a local OpenAI-compatible LLM (O
 
 It is **not** a coding agent yet: no filesystem tools, no edit/test loop, no repo index.
 
-## Truth vs stale docs
+## Docs vs code
 
-`README.md` and `docs/TECHNICAL.md` still describe a supervisor plus chat / code / review / deploy and a HITL deploy interrupt. **That graph is not in the package.**
+[docs/TECHNICAL.md](docs/TECHNICAL.md) matches the shipped chat-only graph. `README.md` / `docs/SIMPLE.md` may still mention a supervisor and deploy specialists — **ignore that** unless you are implementing it.
 
-Trust the code:
+Trust:
 
 - Graph: `START → chat → END` in `src/ai_coworker/graph.py`
 - Chat node: `src/ai_coworker/agents/chat.py` (last 8 turns, one LLM call)
