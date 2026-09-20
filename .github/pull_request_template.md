@@ -5,4 +5,5 @@
 ## S-SDLC
 
 - [ ] No secrets, credentials, or `.env` files
-- [ ] Lint and tests are expected to pass (this PR has no deploy step)
+- [ ] Lint, tests, dependency, and secret scans are expected to pass (no deploy job)
+- [ ] Security issues go to [SECURITY.md](../SECURITY.md), not a public issue

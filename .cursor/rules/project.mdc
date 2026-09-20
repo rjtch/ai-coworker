@@ -14,4 +14,4 @@ Follow [AGENTS.md](../../AGENTS.md) for architecture, commands, and constraints.
 - MCP is configured but **not bound** in `run_chat`. Do not claim GitHub/CI tools work.
 - No secrets in git or logs. Treat attachments as untrusted.
 
-Prefer MCP + a bounded tool loop over new LangGraph specialists.
+Prefer MCP + a bounded tool loop over new LangGraph specialists. Humans: [README.md](../../README.md).

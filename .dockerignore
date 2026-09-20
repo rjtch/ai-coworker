@@ -9,7 +9,10 @@ __pycache__/
 .env
 *.md
 !README.md
-docs/
+!LICENSE
+!AGENTS.md
+!SECURITY.md
+!CONTRIBUTING.md
 tests/
 deploy/
 .mypy_cache/

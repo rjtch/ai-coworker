@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for coding agents (Cursor, OpenCode, Codex, and others). Humans should still start with `README.md`.
+Instructions for coding agents (Cursor, OpenCode, Codex, and others). Humans: [README.md](README.md). Security: [SECURITY.md](SECURITY.md).
 
 ## What this repo is
 
@@ -10,7 +10,7 @@ It is **not** a coding agent yet: no filesystem tools, no edit/test loop, no rep
 
 ## Docs vs code
 
-This file is the source of truth for agents. `README.md` may still mention a supervisor and deploy specialists — **ignore that** unless you are implementing it.
+This file and [README.md](README.md) describe the **shipped** chat host. Do not revive a supervisor or deploy specialist unless that is the task.
 
 Trust:
 

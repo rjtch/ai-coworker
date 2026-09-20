@@ -1,132 +1,86 @@
 # AI Coworker
 
-Multi-agent coworker for **chat**, **code**, **review**, and **deploy**.
+Self-hosted **chat** for a local OpenAI-compatible LLM (Ollama or vLLM). FastAPI + LangGraph, optional Postgres threads, PDF/PNG/JPEG attachments, and an editable prompt catalog.
 
-Runs **entirely on your infra**: LangGraph + MCP + FastAPI talk to a **self-hosted** OpenAI-compatible LLM (Ollama locally, **vLLM** in cluster). No OpenAI/Anthropic cloud APIs.
+It is **not** a multi-agent coding or deploy bot. The graph is `START → chat → END`. MCP GitHub/CI URLs can be set in `.env`, but tools are not bound to the model yet.
 
-## Architecture
-
-```
-POST /chat  →  supervisor  →  chat | code | review | deploy_gate → deploy
-                                  ↑
-                     MCP tools (least privilege per role)
-                                  ↑
-              LLM_BASE_URL → Ollama / vLLM / TGI (in-cluster)
-```
-
-| Role | Job | MCP allowlist |
-|------|-----|---------------|
-| chat | Q&A / planning | none |
-| code | implement / PR | github |
-| review | quality / security | github (read) |
-| deploy | CI/CD (HITL) | ci + github |
-
-Deploy pauses on `interrupt()` until `POST /threads/{id}/approve-deploy`.
+Agent instructions: **[AGENTS.md](AGENTS.md)**.
 
 ## Quick start (Docker / Podman)
 
 ```bash
+cp .env.example .env
 podman compose up -d --build
 ```
 
-- **UI:** http://localhost:3080  
-- **API:** http://localhost:8000  
-
-The compose stack builds the React UI, API, Postgres, Ollama, and pulls the model automatically.
+- **UI:** http://localhost:3080
+- **API:** http://localhost:8000
 
 ### Frontend only (dev)
 
 ```bash
-# API already on :8000
 cd frontend && npm install && npm run dev
 # → http://localhost:3000 (proxies /api → :8000)
 ```
 
-
-### GPU cluster inference (vLLM)
+### Local uv (LLM already running)
 
 ```bash
-# requires NVIDIA Container Toolkit
+uv sync --extra dev
+# LLM_BASE_URL=http://127.0.0.1:11434/v1  LLM_MODEL=openbmb/minicpm-v4.6
+uv run uvicorn ai_coworker.api.main:app --host 0.0.0.0 --port 8000 --app-dir src
+```
+
+GPU Compose profile (vLLM):
+
+```bash
 LLM_BASE_URL=http://vllm:8000/v1 \
 LLM_MODEL=Qwen/Qwen2.5-Coder-14B-Instruct \
 docker compose --profile vllm up --build vllm api postgres
 ```
 
-### Local uv (point at an already-running server)
-
-```bash
-uv sync --extra dev
-# LLM_BASE_URL=http://127.0.0.1:11434/v1  LLM_MODEL=qwen2.5-coder:3b
-uv run uvicorn ai_coworker.api.main:app --host 0.0.0.0 --port 8000 --app-dir src
-```
-
-Kubernetes example manifests: `deploy/k8s/ai-coworker.yaml` (API + vLLM Service).
+Kubernetes example: `deploy/k8s/ai-coworker.yaml`.
 
 ## Chat
 
 ```bash
 curl -s localhost:8000/chat -H 'content-type: application/json' \
-  -d '{"message":"Explain our deploy pipeline"}' | jq
+  -d '{"message":"Hello"}' | jq
 ```
 
-### Approve deploy (after interrupt)
-
-```bash
-curl -s localhost:8000/threads/$THREAD_ID/approve-deploy \
-  -H 'content-type: application/json' \
-  -d '{"approved":true}' | jq
-```
-
-### Stream (SSE)
+Stream (SSE); the UI uses WebSocket `/ws/chat`:
 
 ```bash
 curl -N localhost:8000/chat/stream -H 'content-type: application/json' \
-  -d '{"message":"Add a health check endpoint"}'
+  -d '{"message":"Hello"}'
 ```
 
-## Self-hosted LLM contract
+Pass the same `thread_id` to continue a conversation.
 
-The app only needs an OpenAI-compatible `/v1/chat/completions` server:
+## Self-hosted LLM
 
 | Env | Example |
 |-----|---------|
 | `LLM_BASE_URL` | `http://ollama:11434/v1` or `http://vllm:8000/v1` |
-| `LLM_MODEL` | model name as served (`qwen2.5-coder:3b`, HF id for vLLM) |
+| `LLM_MODEL` | name as served (`openbmb/minicpm-v4.6`, HF id for vLLM) |
 | `LLM_API_KEY` | any string if the server ignores auth |
 
-Works with Ollama, vLLM, TGI, llama.cpp server, LocalAI, etc.
+Works with Ollama, vLLM, TGI, llama.cpp server, LocalAI, and similar.
 
-## MCP
+## MCP, state, tests
 
-Set remote MCP HTTP endpoints in `.env` (can also be in-cluster Services):
-
-- `MCP_GITHUB_URL` / `MCP_GITHUB_TOKEN`
-- `MCP_CI_URL` / `MCP_CI_TOKEN`
-
-## State
-
-Leave `DATABASE_URL` empty for in-memory checkpoints. Compose/K8s: use the bundled Postgres for durable threads.
-
-## Tests
-
-```bash
-uv run pytest
-```
-
-## Docs
-
-| Doc | Audience |
-|-----|----------|
-| **[AGENTS.md](AGENTS.md)** | Cursor and other coding agents (architecture, commands, constraints) |
+- `MCP_GITHUB_*` / `MCP_CI_*` — optional HTTP MCP; chat allowlist is empty today.
+- Empty `DATABASE_URL` → in-memory checkpoints; Compose Postgres for durable threads.
+- `uv run pytest` and `uv run ruff check src tests`. CI is verify-only (no deploy): `.github/workflows/s-sdlc.yml`.
 
 ## Layout
 
 ```
-src/ai_coworker/
-  agents/     # graph nodes (logic only)
-  prompts/    # Markdown + manifest.yaml ← edit prompts here
-  api/ mcp/ graph.py …
-frontend/
+src/ai_coworker/   API, graph, chat node, prompts, MCP scaffold
+frontend/          React chat + prompts panel
+tests/
+compose.yml
+.github/           S-SDLC (lint, test, deps, secrets) — no deploy
 ```
 
-Prompt conventions: [`src/ai_coworker/prompts/README.md`](src/ai_coworker/prompts/README.md).
+License: [MIT](LICENSE). Vulnerability reports: [SECURITY.md](SECURITY.md).

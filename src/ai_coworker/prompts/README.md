@@ -8,7 +8,7 @@ Prompt templates are stored in a **persisted JSON catalog** (editable from the U
 |----------|----------------|
 | Storage | Persisted JSON at `PROMPTS_PERSIST_PATH` (default `/data/prompts.json`) |
 | Defaults | Inline `text` in `manifest.yaml` — seeded once, then catalog is source of truth |
-| IDs | Stable dotted names (`chat.system`, `review.user`) |
+| IDs | Stable dotted names (`chat.system`) |
 | Variables | `{brace}` placeholders via LangChain `PromptTemplate` |
 | Loading | `ai_coworker.prompts.get_text` / `render` / `system_message` |
 
