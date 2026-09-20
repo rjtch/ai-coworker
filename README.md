@@ -117,6 +117,7 @@ uv run pytest
 
 | Doc | Audience |
 |-----|----------|
+| **[AGENTS.md](AGENTS.md)** | Cursor and other coding agents (current code, commands, constraints) |
 | **[docs/SIMPLE.md](docs/SIMPLE.md)** | Quick start & operator basics |
 | **[docs/TECHNICAL.md](docs/TECHNICAL.md)** | Deep architecture, control flow, security, references |
 
