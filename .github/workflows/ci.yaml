@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
       - name: Ruff
         run: uv sync --frozen --extra dev && uv run ruff check src tests
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -53,7 +53,7 @@ jobs:
           python-version: "3.12"
       - name: Pytest
         run: uv sync --frozen --extra dev && uv run pytest
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -79,7 +79,7 @@ jobs:
         run: |
           uv export --frozen --no-dev --no-emit-project -o /tmp/requirements.txt
           uvx pip-audit -r /tmp/requirements.txt
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
