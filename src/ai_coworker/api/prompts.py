@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
@@ -11,6 +12,9 @@ from ai_coworker.config import Settings, get_settings
 from ai_coworker.prompts import PromptError, get_store
 
 router = APIRouter(prefix="/prompts", tags=["prompts"])
+
+# Prompts the chat graph loads on every turn; deleting one breaks chat.
+REQUIRED_PROMPT_IDS = frozenset({"chat.system"})
 
 
 class PromptBody(BaseModel):
@@ -51,7 +55,7 @@ def _require_admin(
     supplied = x_prompts_token
     if authorization and authorization.lower().startswith("bearer "):
         supplied = authorization[7:].strip()
-    if supplied != token:
+    if not supplied or not hmac.compare_digest(supplied.encode(), token.encode()):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or missing prompts admin token")
 
 
@@ -130,6 +134,11 @@ async def put_prompt(prompt_id: str, body: PromptBody) -> PromptResponse:
 )
 async def delete_prompt(prompt_id: str) -> Response:
     """Permanently remove a prompt from the catalog."""
+    if prompt_id in REQUIRED_PROMPT_IDS:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Prompt {prompt_id!r} is required by chat; edit or reset it instead",
+        )
     try:
         get_store().delete_prompt(prompt_id)
     except PromptError as exc:

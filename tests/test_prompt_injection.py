@@ -110,19 +110,41 @@ def test_prompts_api_put_and_get():
 def test_prompts_api_delete():
     client = TestClient(app)
     store = get_store()
-    prompt_id = "chat.system"
-    original = store.get_text(prompt_id)
+    prompt_id = "test.disposable"
 
     try:
+        created = client.post("/prompts", json={"id": prompt_id, "text": "Throwaway."})
+        assert created.status_code == 200
+
         deleted = client.delete(f"/prompts/{prompt_id}")
         assert deleted.status_code == 204
         assert prompt_id not in store.list_ids()
 
         with pytest.raises(PromptError):
             get_text(prompt_id)
-
-        store.clear_override(prompt_id)
-        assert store.get_text(prompt_id) == original
     finally:
-        if prompt_id not in store.list_ids():
-            store.clear_override(prompt_id)
+        if prompt_id in store.list_ids():
+            store.delete_prompt(prompt_id)
+
+
+def test_prompts_api_refuses_to_delete_required_prompt():
+    client = TestClient(app)
+    store = get_store()
+
+    deleted = client.delete("/prompts/chat.system")
+    assert deleted.status_code == 409
+    assert "chat.system" in store.list_ids()
+
+
+def test_prompts_api_rejects_wrong_admin_token(monkeypatch):
+    from ai_coworker.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "prompts_admin_token", "s3cret")
+    client = TestClient(app)
+
+    missing = client.put("/prompts/chat.system", json={"text": "Nope."})
+    wrong = client.put(
+        "/prompts/chat.system", json={"text": "Nope."}, headers={"X-Prompts-Token": "guess"}
+    )
+    assert missing.status_code == 401
+    assert wrong.status_code == 401
