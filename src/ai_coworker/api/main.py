@@ -207,19 +207,19 @@ async def websocket_chat(ws: WebSocket) -> None:
                 stream_config: dict[str, Any] = config,
                 stream_inputs: dict[str, Any] = inputs,
             ) -> None:
-                async for event in _stream_graph_events(
-                    stream_thread_id, stream_config, stream_inputs
-                ):
-                    await _ws_send(ws, event)
+                try:
+                    async for event in _stream_graph_events(
+                        stream_thread_id, stream_config, stream_inputs
+                    ):
+                        await _ws_send(ws, event)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:  # noqa: BLE001
+                    logger.exception("ws chat failed")
+                    await _ws_send(ws, {"type": "error", "message": str(exc)})
 
+            # Run in the background so the loop keeps reading frames (cancel, ping).
             run_task = asyncio.create_task(_run_chat())
-            try:
-                await run_task
-            except asyncio.CancelledError:
-                await _ws_send(ws, {"type": "cancelled"})
-            except Exception as exc:  # noqa: BLE001
-                logger.exception("ws chat failed")
-                await _ws_send(ws, {"type": "error", "message": str(exc)})
 
     except WebSocketDisconnect:
         if run_task and not run_task.done():

@@ -1,32 +1,26 @@
-# React + TypeScript + Vite
+# AI Coworker web UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript + Vite frontend for the AI Coworker chat host. Project overview: [../README.md](../README.md). Agent instructions: [../AGENTS.md](../AGENTS.md).
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Chat** (`src/App.tsx`) — threads via `thread_id`, PDF/PNG/JPEG attachments, and three transports: WebSocket `/ws/chat` (default, supports cancel), SSE `/chat/stream`, or plain HTTP `/chat`.
+- **Prompts panel** (`src/PromptsPanel.tsx`) — list, edit, reset, delete, and reload the prompt catalog (`/prompts`). Mutations send `X-Prompts-Token` when an admin token is set; the token is kept in `localStorage`.
+- **API client** (`src/api.ts`) — all calls go through `VITE_API_BASE` (default `/api`).
 
-## React Compiler
+The deploy-approval UI (`approveDeploy`, "Awaiting deploy approval") is leftover. The backend graph is `START → chat → END` and has no `approve-deploy` route.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Develop
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev     # http://localhost:3000, proxies /api (incl. WebSocket) → http://127.0.0.1:8000
+npm run lint    # oxlint
+npm run build   # tsc -b && vite build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Run the API first (see the root README).
+
+## Production
+
+`Dockerfile` builds the app and serves it with nginx (`nginx.conf`), which proxies `/api/` and `/api/ws/` to `api:8000`. In Compose the UI is on http://localhost:3080.
