@@ -2,6 +2,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.tools import BaseTool
 
+from ai_coworker.attachments import history_has_images
 from ai_coworker.prompts import system_message
 from ai_coworker.state import CoworkerState
 
@@ -18,7 +19,7 @@ async def run_chat(
     if not history:
         history = [HumanMessage(content="Hello")]
 
-    active_llm = vision_llm or llm
+    active_llm = vision_llm if vision_llm and history_has_images(history) else llm
     chat_llm = active_llm.bind(temperature=0.55) if hasattr(active_llm, "bind") else active_llm
     response = await chat_llm.ainvoke([system_message("chat.system"), *history])
     text = _as_text(response.content)
